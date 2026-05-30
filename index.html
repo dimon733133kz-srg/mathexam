@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Билеты</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e0e;
+    --surface: #181818;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #ff6b35;
+    --text: #f0f0f0;
+    --muted: #666;
+    --correct: #4ade80;
+    --wrong: #f87171;
+    --selected: #2a2a2a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+  .header-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ─── SCREENS ─── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── TICKET SELECT ─── */
+  #screen-select {
+    padding: 60px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .select-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    letter-spacing: 4px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .select-heading span { color: var(--accent); }
+  .select-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 48px;
+  }
+
+  .tickets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+  .ticket-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 18px 0;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    border-radius: 2px;
+  }
+  .ticket-btn:hover {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .random-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    padding: 18px 48px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .random-btn:hover {
+    background: var(--accent2);
+    transform: translateY(-2px);
+  }
+  .random-btn svg { width: 20px; height: 20px; }
+
+  /* ─── QUIZ ─── */
+  #screen-quiz {
+    padding: 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .quiz-ticket-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 3px;
+    color: var(--accent);
+  }
+  .quiz-progress-wrap {
+    flex: 1;
+    min-width: 200px;
+  }
+  .quiz-progress-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .quiz-progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .quiz-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+    border-radius: 2px;
+  }
+  .back-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border-radius: 2px;
+    letter-spacing: 1px;
+  }
+  .back-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* Question */
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 36px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .question-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .question-text {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 28px;
+  }
+
+  /* Answer options */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .option {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 14px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .option:hover:not(.answered) {
+    border-color: #444;
+    background: #1a1a1a;
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: rgba(232, 255, 71, 0.06);
+  }
+  .option.result-correct {
+    border-color: var(--correct);
+    background: rgba(74, 222, 128, 0.08);
+  }
+  .option.result-wrong {
+    border-color: var(--wrong);
+    background: rgba(248, 113, 113, 0.08);
+  }
+  .option.result-correct-answer {
+    border-color: var(--correct);
+    background: rgba(74, 222, 128, 0.12);
+  }
+
+  .option-letter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    min-width: 22px;
+    transition: color 0.15s;
+  }
+  .option.selected .option-letter { color: var(--accent); }
+  .option.result-correct .option-letter { color: var(--correct); }
+  .option.result-wrong .option-letter { color: var(--wrong); }
+
+  .option-content { flex: 1; }
+  .option-text { font-size: 15px; line-height: 1.4; }
+  .option-img {
+    max-width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    border-radius: 2px;
+  }
+
+  .option-mark {
+    margin-left: auto;
+    font-size: 16px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .option.selected .option-mark { opacity: 1; color: var(--accent); }
+  .option.result-correct .option-mark { opacity: 1; color: var(--correct); }
+  .option.result-wrong .option-mark { opacity: 1; color: var(--wrong); }
+
+  /* Navigation between questions */
+  .question-nav {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .q-dot {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .q-dot:hover { border-color: #444; }
+  .q-dot.answered { border-color: var(--accent); color: var(--accent); background: rgba(232,255,71,0.06); }
+  .q-dot.current { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  /* Submit */
+  .submit-wrap {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .submit-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 3px;
+    padding: 16px 40px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .submit-btn.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .submit-btn.active:hover { background: var(--accent2); transform: translateY(-2px); }
+  .submit-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+
+  /* Results */
+  #screen-results {
+    padding: 60px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .results-heading {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 4px;
+    margin-bottom: 8px;
+  }
+  .results-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 40px;
+  }
+  .results-score span {
+    color: var(--accent);
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .result-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+    margin-bottom: 12px;
+  }
+  .result-item-q {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .result-verdict {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 6px 12px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .result-verdict.ok { background: rgba(74,222,128,0.12); color: var(--correct); border: 1px solid rgba(74,222,128,0.3); }
+  .result-verdict.fail { background: rgba(248,113,113,0.12); color: var(--wrong); border: 1px solid rgba(248,113,113,0.3); }
+  .result-correct-text {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .result-correct-text strong { color: var(--correct); }
+
+  .retry-btn {
+    margin-top: 32px;
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 3px;
+    padding: 14px 36px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    margin-right: 12px;
+  }
+  .retry-btn:hover { background: var(--accent); color: #000; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">ЭКЗАМЕН</div>
+    <div class="header-sub">Система тестирования</div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: SELECT ══════════════════ -->
+<div id="screen-select" class="screen active">
+  <div class="select-heading">ВЫБЕРИ <span>БИЛЕТ</span></div>
+  <div class="select-sub">// 30 билетов · выбери номер или возьми случайный</div>
+  <div class="tickets-grid" id="tickets-grid"></div>
+  <button class="random-btn" onclick="startRandom()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l5.1 5.1M4 4l5 5"/>
+    </svg>
+    СЛУЧАЙНЫЙ БИЛЕТ
+  </button>
+</div>
+
+<!-- ══════════════════ SCREEN: QUIZ ══════════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <button class="back-btn" onclick="goBack()">← НАЗАД</button>
+    <div class="quiz-ticket-label" id="quiz-ticket-label">БИЛЕТ 1</div>
+    <div class="quiz-progress-wrap">
+      <div class="quiz-progress-text" id="quiz-progress-text">0 / 0 ОТВЕЧЕНО</div>
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="quiz-progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="question-nav" id="question-nav"></div>
+  <div id="question-area"></div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" id="submit-btn" onclick="submitQuiz()">СДАТЬ БИЛЕТ</button>
+    <div class="submit-hint" id="submit-hint">Ответьте на все вопросы</div>
+  </div>
+</div>
+
+<!-- ══════════════════ SCREEN: RESULTS ══════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="results-heading">РЕЗУЛЬТАТ</div>
+  <div class="results-score" id="results-score"></div>
+  <div id="results-list"></div>
+  <div>
+    <button class="retry-btn" onclick="retryTicket()">ПЕРЕСДАТЬ</button>
+    <button class="retry-btn" onclick="goBack()">← К БИЛЕТАМ</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  ДАННЫЕ БИЛЕТОВ
+//  Заполни сам! Структура:
+//
+//  tickets[N] = [   // N = номер билета (1–30)
+//    {
+//      question: "Текст вопроса",
+//      answerType: "text" | "image",  // тип ВАРИАНТОВ ОТВЕТА
+//      options: [
+//        { text: "Вариант А", correct: true },
+//        { text: "Вариант Б", correct: false },
+//        { text: "Вариант В", correct: false },
+//        { text: "Вариант Г", correct: false },
+//      ]
+//      // если answerType = "image", то text не используется,
+//      // картинки берутся из папки questions/ по имени:
+//      // {билет}_{вопрос}_{вариант}.png (или .jpg)
+//      // Например: 1_3_2.png = билет 1, вопрос 3, вариант 2
+//    },
+//    ...
+//  ]
+//
+// ══════════════════════════════════════════════════════════════════
+
+// ПРИМЕЧАНИЕ: каждый билет содержит только теоретический вопрос (задание 1).
+// Задания 2 и 3 — вычислительные задачи, они не включены в тест.
+// Вопросы с пометкой IMAGE — нужно добавить картинки в папку questions/
+
+const tickets = {
+  1: [{
+    question: "Что такое метод координат в аналитической геометрии?",
+    answerType: "text",
+    options: [
+      { text: "Метод изучения геометрических фигур с помощью числовых координат точек и алгебраических уравнений", correct: true },
+      { text: "Метод построения фигур с помощью циркуля и линейки без вычислений", correct: false },
+      { text: "Способ нахождения площадей фигур через интегрирование", correct: false },
+      { text: "Метод описания фигур только через углы и длины сторон", correct: false },
+    ]
+  }, {
+    question: "Что такое уравнение прямой с угловым коэффициентом?",
+    answerType: "text",
+    options: [
+      { text: "y = kx + b, где k — угловой коэффициент, b — свободный член", correct: true },
+      { text: "x = ky + b, где k — коэффициент наклона по оси X", correct: false },
+      { text: "y = ax² + bx + c — уравнение параболы", correct: false },
+      { text: "Ax + By = 0 — уравнение прямой без свободного члена", correct: false },
+    ]
+  }, {
+    question: "Что такое общее уравнение прямой на плоскости?",
+    answerType: "text",
+    options: [
+      { text: "Ax + By + C = 0, где A и B одновременно не равны нулю", correct: true },
+      { text: "y = kx, где k — любое вещественное число", correct: false },
+      { text: "x/a + y/b = 1 — уравнение только в отрезках", correct: false },
+      { text: "x² + y² = r² — каноническое уравнение", correct: false },
+    ]
+  }, {
+    question: "Что такое пучок прямых?",
+    answerType: "text",
+    options: [
+      { text: "Совокупность всех прямых, проходящих через одну фиксированную точку", correct: true },
+      { text: "Совокупность параллельных прямых с одинаковым угловым коэффициентом", correct: false },
+      { text: "Набор прямых, перпендикулярных одной прямой", correct: false },
+      { text: "Множество прямых, лежащих в одной плоскости", correct: false },
+    ]
+  }, {
+    // IMAGE: нужны картинки questions/1_5_1.png – 1_5_4.png (формула прямой через 2 точки)
+    question: "Какова формула уравнения прямой, проходящей через две данные точки?",
+    answerType: "image",
+    options: [
+      { correct: true },
+      { correct: false },
+      { correct: false },
+      { correct: false },
+    ]
+  }],
+
+  2: [{
+    // IMAGE: нужны картинки questions/2_1_1.png – 2_1_4.png (формула косинуса угла между прямыми)
+    question: "По какой формуле находится косинус угла между двумя прямыми?",
+    answerType: "image",
+    options: [
+      { correct: true },
+      { correct: false },
+      { correct: false },
+      { correct: false },
+    ]
+  }],
+
+  3: [{
+    question: "Что такое эллипс?",
+    answerType: "text",
+    options: [
+      { text: "Геометрическое место точек плоскости, сумма расстояний от каждой из которых до двух фиксированных точек (фокусов) постоянна", correct: true },
+      { text: "Геометрическое место точек, равноудалённых от одной фиксированной точки", correct: false },
+      { text: "Геометрическое место точек, разность расстояний до двух фокусов постоянна", correct: false },
+      { text: "Кривая второго порядка, имеющая только одну ось симметрии", correct: false },
+    ]
+  }, {
+    question: "Что такое фокусы эллипса?",
+    answerType: "text",
+    options: [
+      { text: "Две фиксированные точки внутри эллипса, сумма расстояний от которых до любой точки эллипса постоянна и равна 2a", correct: true },
+      { text: "Точки пересечения эллипса с осями координат", correct: false },
+      { text: "Концы большой оси эллипса", correct: false },
+      { text: "Центры кривизны эллипса в крайних точках", correct: false },
+    ]
+  }],
+
+  4: [{
+    question: "Что такое окружность?",
+    answerType: "text",
+    options: [
+      { text: "Геометрическое место точек плоскости, равноудалённых от одной фиксированной точки — центра", correct: true },
+      { text: "Замкнутая кривая, у которой все точки находятся на разном расстоянии от центра", correct: false },
+      { text: "Эллипс, у которого обе полуоси равны нулю", correct: false },
+      { text: "Кривая второго порядка без фокусов", correct: false },
+    ]
+  }, {
+    question: "Каноническое уравнение окружности с центром в начале координат:",
+    answerType: "text",
+    options: [
+      { text: "x² + y² = r²", correct: true },
+      { text: "x² + y² = 2r", correct: false },
+      { text: "(x + y)² = r²", correct: false },
+      { text: "x²/r + y²/r = 1", correct: false },
+    ]
+  }, {
+    question: "Каноническое уравнение окружности с центром в точке (a; b):",
+    answerType: "text",
+    options: [
+      { text: "(x − a)² + (y − b)² = r²", correct: true },
+      { text: "(x + a)² + (y + b)² = r", correct: false },
+      { text: "x² + y² − a − b = r²", correct: false },
+      { text: "(x − a) + (y − b) = r²", correct: false },
+    ]
+  }],
+
+  5: [{
+    question: "Что такое эллипс?",
+    answerType: "text",
+    options: [
+      { text: "Геометрическое место точек плоскости, сумма расстояний от каждой из которых до двух фокусов постоянна и равна 2a", correct: true },
+      { text: "Геометрическое место точек, равноудалённых от одной фиксированной точки", correct: false },
+      { text: "Кривая, разность расстояний до двух фокусов которой постоянна", correct: false },
+      { text: "Замкнутая кривая без фокусов", correct: false },
+    ]
+  }, {
+    question: "Что означает запись комплексного числа в показательной форме z = r·e^(iφ)?",
+    answerType: "text",
+    options: [
+      { text: "r — модуль числа, φ — аргумент (угол); это формула Эйлера: e^(iφ) = cos φ + i·sin φ", correct: true },
+      { text: "r — вещественная часть, φ — мнимая часть числа", correct: false },
+      { text: "r — аргумент, φ — модуль числа", correct: false },
+      { text: "Запись означает степень числа e в степени φ без связи с тригонометрией", correct: false },
+    ]
+  }],
+
+  6: [{
+    question: "Что такое дифференциальное уравнение первого порядка?",
+    answerType: "text",
+    options: [
+      { text: "Уравнение, связывающее независимую переменную x, функцию y и её первую производную y'", correct: true },
+      { text: "Уравнение, содержащее только первые степени переменных x и y", correct: false },
+      { text: "Уравнение, в котором неизвестная входит лишь под знаком интеграла", correct: false },
+      { text: "Уравнение с одной неизвестной переменной без производных", correct: false },
+    ]
+  }, {
+    question: "Какие основные типы дифференциальных уравнений первого порядка существуют?",
+    answerType: "text",
+    options: [
+      { text: "С разделяющимися переменными, линейные, однородные, уравнения Бернулли", correct: true },
+      { text: "Только однородные и неоднородные", correct: false },
+      { text: "Только уравнения с разделёнными переменными", correct: false },
+      { text: "Параболические, гиперболические и эллиптические", correct: false },
+    ]
+  }],
+
+  7: [{
+    question: "Что такое порядок дифференциального уравнения?",
+    answerType: "text",
+    options: [
+      { text: "Порядок наивысшей производной, входящей в уравнение", correct: true },
+      { text: "Количество неизвестных функций в уравнении", correct: false },
+      { text: "Степень уравнения как многочлена", correct: false },
+      { text: "Число слагаемых в уравнении", correct: false },
+    ]
+  }, {
+    question: "Что такое общее решение дифференциального уравнения?",
+    answerType: "text",
+    options: [
+      { text: "Решение, содержащее произвольные постоянные в количестве, равном порядку уравнения", correct: true },
+      { text: "Единственное конкретное решение, удовлетворяющее начальным условиям", correct: false },
+      { text: "Решение без произвольных постоянных", correct: false },
+      { text: "Любая функция, подставляемая в уравнение", correct: false },
+    ]
+  }, {
+    question: "Что такое частное решение дифференциального уравнения?",
+    answerType: "text",
+    options: [
+      { text: "Решение, получаемое из общего при конкретных значениях произвольных постоянных", correct: true },
+      { text: "Решение, содержащее все произвольные постоянные", correct: false },
+      { text: "Решение, определённое лишь на части числовой оси", correct: false },
+      { text: "Решение, в котором переменные разделены", correct: false },
+    ]
+  }],
+
+  8: [{
+    question: "Что такое каноническое уравнение эллипса?",
+    answerType: "text",
+    options: [
+      { text: "x²/a² + y²/b² = 1, где a — большая полуось, b — малая полуось, a > b > 0", correct: true },
+      { text: "x²/a² − y²/b² = 1 — уравнение гиперболы", correct: false },
+      { text: "x² + y² = a² — уравнение окружности", correct: false },
+      { text: "y² = 2px — уравнение параболы", correct: false },
+    ]
+  }, {
+    question: "Что такое большая полуось эллипса a?",
+    answerType: "text",
+    options: [
+      { text: "Половина наибольшего диаметра эллипса; в каноническом уравнении стоит под x²", correct: true },
+      { text: "Расстояние между фокусами эллипса", correct: false },
+      { text: "Половина наименьшего диаметра эллипса", correct: false },
+      { text: "Расстояние от центра до вершины по оси Y", correct: false },
+    ]
+  }],
+
+  9: [{
+    question: "Что такое дифференциальное уравнение с разделяющимися переменными?",
+    answerType: "text",
+    options: [
+      { text: "Уравнение вида M(x)dx = N(y)dy, которое можно привести к форме, где в каждой части стоит только одна переменная", correct: true },
+      { text: "Уравнение, в котором переменные уже разделены с самого начала", correct: false },
+      { text: "Линейное однородное уравнение второго порядка", correct: false },
+      { text: "Уравнение, не содержащее производных", correct: false },
+    ]
+  }, {
+    question: "Как решается дифференциальное уравнение с разделяющимися переменными?",
+    answerType: "text",
+    options: [
+      { text: "Переменные разносятся в разные части уравнения, затем обе части интегрируются", correct: true },
+      { text: "Находится характеристическое уравнение и его корни", correct: false },
+      { text: "Уравнение дифференцируется дважды и приводится к стандартному виду", correct: false },
+      { text: "Применяется метод вариации произвольных постоянных", correct: false },
+    ]
+  }],
+
+  10: [{
+    question: "Чем отличается уравнение с разделёнными переменными от уравнения с разделяющимися переменными?",
+    answerType: "text",
+    options: [
+      { text: "В уравнении с разделёнными переменными переменные уже стоят в разных частях; в разделяющемся — их нужно разделить алгебраически", correct: true },
+      { text: "Никакой разницы нет, это одно и то же", correct: false },
+      { text: "Разделяющееся всегда имеет более высокий порядок", correct: false },
+      { text: "Разделённое уравнение не имеет общего решения", correct: false },
+    ]
+  }, {
+    question: "Общий вид уравнения с разделёнными переменными:",
+    answerType: "text",
+    options: [
+      { text: "f(x)dx + g(y)dy = 0, то есть части с x и y уже разнесены", correct: true },
+      { text: "y' = f(x)·g(y), где нужно разделить переменные", correct: false },
+      { text: "y'' + p(x)y' + q(x)y = 0", correct: false },
+      { text: "dy/dx = f(x/y)", correct: false },
+    ]
+  }],
+
+  11: [{
+    question: "Что такое дифференциальное уравнение второго порядка?",
+    answerType: "text",
+    options: [
+      { text: "Уравнение, содержащее вторую производную функции как наивысшую", correct: true },
+      { text: "Уравнение с двумя неизвестными функциями", correct: false },
+      { text: "Уравнение, которое нужно дифференцировать дважды для решения", correct: false },
+      { text: "Система из двух дифференциальных уравнений первого порядка", correct: false },
+    ]
+  }, {
+    question: "Общий вид линейного однородного уравнения второго порядка:",
+    answerType: "text",
+    options: [
+      { text: "y'' + p(x)y' + q(x)y = 0", correct: true },
+      { text: "y'' + p(x)y' + q(x)y = f(x), где f(x) ≠ 0", correct: false },
+      { text: "y'' = f(x, y)", correct: false },
+      { text: "y'' · y' + q(x) = 0", correct: false },
+    ]
+  }, {
+    question: "Общий вид линейного неоднородного уравнения второго порядка:",
+    answerType: "text",
+    options: [
+      { text: "y'' + p(x)y' + q(x)y = f(x), где f(x) ≠ 0", correct: true },
+      { text: "y'' + p(x)y' + q(x)y = 0", correct: false },
+      { text: "y'' = p(x) + q(x)", correct: false },
+      { text: "y''' + p(x)y = f(x)", correct: false },
+    ]
+  }],
+
+  12: [{
+    question: "По какой формуле определяется расстояние между двумя точками в прямоугольной системе координат?",
+    answerType: "text",
+    options: [
+      { text: "d = √((x₂−x₁)² + (y₂−y₁)²)", correct: true },
+      { text: "d = |x₂−x₁| + |y₂−y₁|", correct: false },
+      { text: "d = (x₂−x₁)² + (y₂−y₁)²", correct: false },
+      { text: "d = √(x₂² + y₂²) − √(x₁² + y₁²)", correct: false },
+    ]
+  }],
+
+  13: [{
+    question: "При каком условии две прямые на плоскости параллельны?",
+    answerType: "text",
+    options: [
+      { text: "Их угловые коэффициенты равны: k₁ = k₂, но прямые не совпадают", correct: true },
+      { text: "Сумма их угловых коэффициентов равна нулю: k₁ + k₂ = 0", correct: false },
+      { text: "Произведение угловых коэффициентов равно 1: k₁·k₂ = 1", correct: false },
+      { text: "Обе прямые проходят через начало координат", correct: false },
+    ]
+  }, {
+    question: "При каком условии две прямые перпендикулярны?",
+    answerType: "text",
+    options: [
+      { text: "k₁·k₂ = −1, то есть угловые коэффициенты — отрицательные обратные друг другу", correct: true },
+      { text: "k₁ = k₂", correct: false },
+      { text: "k₁ + k₂ = 0", correct: false },
+      { text: "k₁ − k₂ = 1", correct: false },
+    ]
+  }, {
+    // IMAGE: нужны картинки questions/13_3_1.png – 13_3_4.png (формула угла между прямыми)
+    question: "Как вычисляется угол между двумя прямыми через их угловые коэффициенты?",
+    answerType: "image",
+    options: [
+      { correct: true },
+      { correct: false },
+      { correct: false },
+      { correct: false },
+    ]
+  }],
+
+  14: [{
+    question: "Чем отличается уравнение с разделёнными переменными от уравнения с разделяющимися переменными?",
+    answerType: "text",
+    options: [
+      { text: "В разделённом уравнении переменные уже находятся в разных частях; в разделяющемся их нужно разделить", correct: true },
+      { text: "Это одно и то же уравнение, разные названия", correct: false },
+      { text: "Разделяющееся — всегда уравнение второго порядка", correct: false },
+      { text: "Разделённое уравнение не имеет общего решения", correct: false },
+    ]
+  }],
+
+  15: [{
+    // IMAGE: нужны картинки questions/15_1_1.png – 15_1_4.png (формула угла между плоскостями)
+    question: "Какова формула для нахождения угла между двумя плоскостями?",
+    answerType: "image",
+    options: [
+      { correct: true },
+      { correct: false },
+      { correct: false },
+      { correct: false },
+    ]
+  }],
+
+  16: [{
+    question: "Что такое дифференциальное уравнение в теории ДУ?",
+    answerType: "text",
+    options: [
+      { text: "Уравнение, связывающее независимую переменную, искомую функцию и её производные", correct: true },
+      { text: "Уравнение, которое решается только численными методами", correct: false },
+      { text: "Уравнение, не имеющее аналитического решения", correct: false },
+      { text: "Система алгебраических уравнений с несколькими переменными", correct: false },
+    ]
+  }, {
+    question: "Что такое задача Коши?",
+    answerType: "text",
+    options: [
+      { text: "Задача нахождения частного решения дифференциального уравнения, удовлетворяющего заданным начальным условиям", correct: true },
+      { text: "Задача нахождения общего решения без начальных условий", correct: false },
+      { text: "Задача построения графика функции по уравнению", correct: false },
+      { text: "Задача нахождения экстремумов функции нескольких переменных", correct: false },
+    ]
+  }],
+
+  17: [{
+    question: "Как складываются комплексные числа z₁ = a + bi и z₂ = c + di?",
+    answerType: "text",
+    options: [
+      { text: "z₁ + z₂ = (a+c) + (b+d)i — вещественные и мнимые части складываются отдельно", correct: true },
+      { text: "z₁ + z₂ = (a·c) + (b·d)i", correct: false },
+      { text: "z₁ + z₂ = (a+b) + (c+d)i", correct: false },
+      { text: "z₁ + z₂ = √(a²+b²) + √(c²+d²)", correct: false },
+    ]
+  }, {
+    question: "Как перемножаются комплексные числа z₁ = a + bi и z₂ = c + di?",
+    answerType: "text",
+    options: [
+      { text: "z₁·z₂ = (ac − bd) + (ad + bc)i, используя i² = −1", correct: true },
+      { text: "z₁·z₂ = ac + bd·i", correct: false },
+      { text: "z₁·z₂ = (a+c)·(b+d)i", correct: false },
+      { text: "z₁·z₂ = a·c + b·d", correct: false },
+    ]
+  }, {
+    question: "Что такое модуль комплексного числа z = a + bi?",
+    answerType: "text",
+    options: [
+      { text: "|z| = √(a² + b²)", correct: true },
+      { text: "|z| = a + b", correct: false },
+      { text: "|z| = a² + b²", correct: false },
+      { text: "|z| = |a| + |b|", correct: false },
+    ]
+  }],
+
+  18: [{
+    question: "Что такое частные производные второго порядка функции двух переменных?",
+    answerType: "text",
+    options: [
+      { text: "Производные, полученные повторным дифференцированием частных производных первого порядка по тем же или другим переменным", correct: true },
+      { text: "Производные функции двух переменных, взятые только по одной из них дважды", correct: false },
+      { text: "Производные второй степени по сумме переменных", correct: false },
+      { text: "Производные, равные нулю для любой функции двух переменных", correct: false },
+    ]
+  }, {
+    question: "При каком условии смешанные частные производные равны?",
+    answerType: "text",
+    options: [
+      { text: "Если смешанные производные ∂²f/∂x∂y и ∂²f/∂y∂x непрерывны в рассматриваемой точке, то они равны", correct: true },
+      { text: "Смешанные производные всегда равны для любой функции", correct: false },
+      { text: "Только если функция линейная", correct: false },
+      { text: "Только если функция не зависит от одной из переменных", correct: false },
+    ]
+  }],
+
+  19: [{
+    question: "Что такое комплексное число?",
+    answerType: "text",
+    options: [
+      { text: "Число вида z = a + bi, где a и b — вещественные числа, i — мнимая единица (i² = −1)", correct: true },
+      { text: "Число, содержащее только мнимую часть без вещественной", correct: false },
+      { text: "Отрицательное вещественное число", correct: false },
+      { text: "Любое число в системе счисления с основанием выше 10", correct: false },
+    ]
+  }, {
+    question: "Как изображаются комплексные числа геометрически?",
+    answerType: "text",
+    options: [
+      { text: "На комплексной плоскости: вещественная ось — горизонталь, мнимая — вертикаль; число z = a+bi — точка (a, b)", correct: true },
+      { text: "На числовой прямой как обычные вещественные числа", correct: false },
+      { text: "В трёхмерном пространстве на трёх осях", correct: false },
+      { text: "В полярных координатах только через угол, без радиуса", correct: false },
+    ]
+  }],
+
+  20: [{
+    question: "Как находятся комплексные корни квадратного уравнения ax² + bx + c = 0?",
+    answerType: "text",
+    options: [
+      { text: "По формуле x = (−b ± √D) / 2a; если D = b²−4ac < 0, корни комплексно-сопряжённые: x = −b/2a ± i·√|D|/2a", correct: true },
+      { text: "Комплексные корни квадратного уравнения не существуют", correct: false },
+      { text: "Только методом подбора среди мнимых чисел", correct: false },
+      { text: "Корни всегда чисто мнимые: x = ±i·√(c/a)", correct: false },
+    ]
+  }, {
+    question: "Если дискриминант квадратного уравнения D < 0, то корни уравнения:",
+    answerType: "text",
+    options: [
+      { text: "Два комплексно-сопряжённых числа вида x₁,₂ = α ± βi", correct: true },
+      { text: "Два одинаковых вещественных корня", correct: false },
+      { text: "Два различных вещественных корня", correct: false },
+      { text: "Корней нет вообще (ни вещественных, ни комплексных)", correct: false },
+    ]
+  }],
+
+  21: [{
+    question: "В чём суть теоремы о неявной функции для двух переменных?",
+    answerType: "text",
+    options: [
+      { text: "Если F(x, y) = 0 и выполнены условия теоремы, то y можно выразить как функцию y = f(x) в окрестности точки, а производная dy/dx = −F'x / F'y", correct: true },
+      { text: "Любое уравнение F(x,y) = 0 всегда задаёт y как явную функцию от x", correct: false },
+      { text: "Неявная функция не имеет производной ни в одной точке", correct: false },
+      { text: "Производная неявной функции всегда равна нулю", correct: false },
+    ]
+  }],
+
+  22: [{
+    question: "Что такое алгебраическая форма комплексного числа?",
+    answerType: "text",
+    options: [
+      { text: "Запись z = a + bi, где a — вещественная часть, b — мнимая часть, i² = −1", correct: true },
+      { text: "Запись z = r(cos φ + i·sin φ)", correct: false },
+      { text: "Запись z = r·e^(iφ)", correct: false },
+      { text: "Запись через полярные координаты (r; φ)", correct: false },
+    ]
+  }, {
+    question: "Что такое тригонометрическая форма комплексного числа?",
+    answerType: "text",
+    options: [
+      { text: "z = r(cos φ + i·sin φ), где r = |z| — модуль, φ — аргумент числа", correct: true },
+      { text: "z = a + bi — алгебраическая форма", correct: false },
+      { text: "z = r·e^(iφ) — показательная форма", correct: false },
+      { text: "z = tg φ + i·ctg φ", correct: false },
+    ]
+  }, {
+    question: "Что такое показательная форма комплексного числа?",
+    answerType: "text",
+    options: [
+      { text: "z = r·e^(iφ), где r — модуль, φ — аргумент; основана на формуле Эйлера", correct: true },
+      { text: "z = r^φ — степенная запись", correct: false },
+      { text: "z = cos φ + i·sin φ без модуля", correct: false },
+      { text: "z = a + bi в стандартной алгебраической форме", correct: false },
+    ]
+  }],
+
+  23: [{
+    question: "Что такое частная производная функции нескольких переменных?",
+    answerType: "text",
+    options: [
+      { text: "Производная по одной переменной при фиксированных остальных переменных", correct: true },
+      { text: "Производная суммы всех переменных функции", correct: false },
+      { text: "Полный дифференциал, делённый на приращение аргумента", correct: false },
+      { text: "Производная высшего порядка по всем переменным сразу", correct: false },
+    ]
+  }, {
+    question: "В чём геометрический смысл частной производной ∂z/∂x функции z = f(x,y)?",
+    answerType: "text",
+    options: [
+      { text: "Угловой коэффициент касательной к линии пересечения поверхности z = f(x,y) с плоскостью y = const", correct: true },
+      { text: "Площадь касательной плоскости к поверхности в данной точке", correct: false },
+      { text: "Длина градиента функции в данной точке", correct: false },
+      { text: "Скорость изменения функции сразу по обеим переменным", correct: false },
+    ]
+  }],
+
+  24: [{
+    question: "Что такое двойной интеграл?",
+    answerType: "text",
+    options: [
+      { text: "Предел интегральных сумм по области D на плоскости; обобщение определённого интеграла на функции двух переменных", correct: true },
+      { text: "Интеграл, взятый дважды по одной и той же переменной", correct: false },
+      { text: "Сумма двух обычных определённых интегралов", correct: false },
+      { text: "Интеграл от комплексной функции по контуру", correct: false },
+    ]
+  }, {
+    question: "Как вычисляется двойной интеграл методом повторного интегрирования?",
+    answerType: "text",
+    options: [
+      { text: "Сначала интегрируют по одной переменной (другую считают константой), затем результат интегрируют по второй переменной", correct: true },
+      { text: "Интегрируют одновременно по обеим переменным в одном действии", correct: false },
+      { text: "Вычисляют как произведение двух одномерных интегралов всегда", correct: false },
+      { text: "Применяют только численные методы, аналитически не вычисляется", correct: false },
+    ]
+  }],
+
+  25: [{
+    question: "Что такое комплексное число и каковы его формы записи?",
+    answerType: "text",
+    options: [
+      { text: "Число z = a+bi; основные формы: алгебраическая (a+bi), тригонометрическая (r(cosφ+i·sinφ)) и показательная (r·e^iφ)", correct: true },
+      { text: "Только мнимое число вида bi без вещественной части", correct: false },
+      { text: "Число с двумя вещественными частями без мнимой единицы", correct: false },
+      { text: "Комплексное число записывается только в показательной форме", correct: false },
+    ]
+  }],
+
+  26: [{
+    question: "Что такое полное приращение функции нескольких переменных?",
+    answerType: "text",
+    options: [
+      { text: "Δz = f(x+Δx, y+Δy) − f(x,y) — изменение функции при одновременном изменении всех аргументов", correct: true },
+      { text: "Сумма частных приращений по каждой переменной по отдельности", correct: false },
+      { text: "Производная функции по времени", correct: false },
+      { text: "Разность значений функции в двух фиксированных точках области", correct: false },
+    ]
+  }, {
+    question: "В чём геометрический смысл полного приращения функции двух переменных?",
+    answerType: "text",
+    options: [
+      { text: "Разность аппликат (z-координат) двух точек поверхности z = f(x,y)", correct: true },
+      { text: "Площадь касательной плоскости к поверхности", correct: false },
+      { text: "Длина дуги на поверхности между двумя точками", correct: false },
+      { text: "Угол наклона касательной в данной точке", correct: false },
+    ]
+  }],
+
+  27: [{
+    question: "Что такое частное приращение функции нескольких переменных?",
+    answerType: "text",
+    options: [
+      { text: "Приращение функции при изменении только одной переменной, остальные фиксированы: Δₓz = f(x+Δx, y) − f(x, y)", correct: true },
+      { text: "Полное приращение, делённое на число переменных", correct: false },
+      { text: "Производная функции по всем переменным одновременно", correct: false },
+      { text: "Разность частных производных в двух точках", correct: false },
+    ]
+  }],
+
+  28: [{
+    question: "Чем отличается частное приращение от полного приращения функции нескольких переменных?",
+    answerType: "text",
+    options: [
+      { text: "При частном приращении меняется только одна переменная; при полном — все переменные меняются одновременно", correct: true },
+      { text: "Частное приращение всегда больше полного", correct: false },
+      { text: "Полное приращение является суммой частных при любых условиях", correct: false },
+      { text: "Частное приращение определяется только для линейных функций", correct: false },
+    ]
+  }],
+
+  29: [{
+    question: "Что такое функция нескольких переменных?",
+    answerType: "text",
+    options: [
+      { text: "Функция, значение которой однозначно определяется набором двух и более независимых переменных: z = f(x, y, …)", correct: true },
+      { text: "Функция, которая принимает несколько значений при одном аргументе", correct: false },
+      { text: "Система нескольких функций от одной переменной", correct: false },
+      { text: "Функция, область значений которой содержит более одного числа", correct: false },
+    ]
+  }, {
+    question: "Что такое область определения функции двух переменных z = f(x, y)?",
+    answerType: "text",
+    options: [
+      { text: "Множество точек (x, y) плоскости, при которых функция определена и принимает вещественные значения", correct: true },
+      { text: "Промежуток значений переменной x, при которых функция существует", correct: false },
+      { text: "Множество всех значений, которые принимает функция z", correct: false },
+      { text: "Только целочисленные пары (x, y)", correct: false },
+    ]
+  }],
+
+  30: [{
+    question: "Что такое неявная функция?",
+    answerType: "text",
+    options: [
+      { text: "Функция, заданная уравнением F(x, y) = 0, из которого y не выражено явно через x", correct: true },
+      { text: "Функция, явно выраженная через все переменные", correct: false },
+      { text: "Функция без области определения", correct: false },
+      { text: "Функция, заданная параметрически через третью переменную", correct: false },
+    ]
+  }, {
+    question: "Как дифференцируется неявная функция y(x), заданная уравнением F(x,y) = 0?",
+    answerType: "text",
+    options: [
+      { text: "dy/dx = −F'x / F'y, где F'x и F'y — частные производные функции F", correct: true },
+      { text: "dy/dx = F'x · F'y", correct: false },
+      { text: "dy/dx = F'y / F'x", correct: false },
+      { text: "dy/dx = −F'y / F'x", correct: false },
+    ]
+  }, {
+    question: "Что такое частные производные высших порядков?",
+    answerType: "text",
+    options: [
+      { text: "Производные, полученные повторным дифференцированием частных производных; например ∂²f/∂x² или ∂²f/∂x∂y", correct: true },
+      { text: "Производные функции, порядок которых равен числу переменных", correct: false },
+      { text: "Производные по сумме всех переменных", correct: false },
+      { text: "Производные, которые всегда равны нулю начиная со второго порядка", correct: false },
+    ]
+  }],
+};
+
+// ══════════════════════════════════════════════════════════════════
+//  ЛОГИКА
+// ══════════════════════════════════════════════════════════════════
+
+let currentTicket = null;
+let currentQuestionIndex = 0;
+let userAnswers = {};    // { questionIdx: optionIdx (в shuffled порядке) }
+let shuffledOptions = []; // shuffledOptions[qIdx] = массив { text, correct, origIdx }
+
+const letters = ['А', 'Б', 'В', 'Г'];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Build ticket grid
+function buildGrid() {
+  const grid = document.getElementById('tickets-grid');
+  grid.innerHTML = '';
+  for (let i = 1; i <= 30; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'ticket-btn';
+    btn.textContent = i;
+    btn.onclick = () => startTicket(i);
+    grid.appendChild(btn);
+  }
+}
+
+function startRandom() {
+  startTicket(Math.floor(Math.random() * 30) + 1);
+}
+
+function startTicket(num) {
+  currentTicket = num;
+  currentQuestionIndex = 0;
+  userAnswers = {};
+  const questions = tickets[num];
+
+  // Shuffle options for each question
+  shuffledOptions = questions.map((q, qi) => {
+    return shuffle(q.options.map((o, oi) => ({ ...o, origIdx: oi })));
+  });
+
+  showScreen('quiz');
+  document.getElementById('quiz-ticket-label').textContent = `БИЛЕТ ${num}`;
+  renderQuizNav();
+  renderQuestion(0);
+  updateProgress();
+}
+
+function renderQuizNav() {
+  const nav = document.getElementById('question-nav');
+  const questions = tickets[currentTicket];
+  nav.innerHTML = '';
+  questions.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'q-dot' + (userAnswers[i] !== undefined ? ' answered' : '') + (i === currentQuestionIndex ? ' current' : '');
+    dot.textContent = i + 1;
+    dot.onclick = () => { currentQuestionIndex = i; renderQuestion(i); renderQuizNav(); };
+    nav.appendChild(dot);
+  });
+}
+
+function renderQuestion(qi) {
+  const q = tickets[currentTicket][qi];
+  const opts = shuffledOptions[qi];
+  const area = document.getElementById('question-area');
+
+  const answered = userAnswers[qi] !== undefined;
+
+  area.innerHTML = `
+    <div class="question-card" id="qcard-${qi}">
+      <div class="question-num">ВОПРОС ${qi + 1} / ${tickets[currentTicket].length}</div>
+      <div class="question-text">${q.question}</div>
+      <div class="options-list" id="options-list"></div>
+    </div>
+  `;
+
+  const list = document.getElementById('options-list');
+  opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option' + (userAnswers[qi] === i ? ' selected' : '');
+    div.onclick = () => selectOption(qi, i);
+
+    let contentHtml = '';
+    if (q.answerType === 'image') {
+      // Try to find image: questions/{ticket}_{qIdx+1}_{optOrigIdx+1}.png or .jpg
+      const base = `questions/${currentTicket}_${qi + 1}_${opt.origIdx + 1}`;
+      contentHtml = `
+        <picture>
+          <source srcset="${base}.png" type="image/png">
+          <source srcset="${base}.jpg" type="image/jpeg">
+          <img class="option-img" src="${base}.png" 
+               onerror="tryJpg(this, '${base}.jpg')"
+               alt="Вариант ${letters[i]}">
+        </picture>`;
+    } else {
+      contentHtml = `<span class="option-text">${opt.text}</span>`;
+    }
+
+    div.innerHTML = `
+      <span class="option-letter">${letters[i]}</span>
+      <div class="option-content">${contentHtml}</div>
+      <span class="option-mark">✓</span>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function tryJpg(img, jpgSrc) {
+  if (!img.dataset.tried) {
+    img.dataset.tried = '1';
+    img.src = jpgSrc;
+  } else {
+    img.style.display = 'none';
+    img.parentElement.innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:#666">[изображение не найдено]</span>';
+  }
+}
+
+function selectOption(qi, optIdx) {
+  // Don't allow changing after submit
+  if (document.querySelector('.option.result-correct, .option.result-wrong')) return;
+  userAnswers[qi] = optIdx;
+  renderQuestion(qi);
+  renderQuizNav();
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = tickets[currentTicket].length;
+  const answered = Object.keys(userAnswers).length;
+  document.getElementById('quiz-progress-text').textContent = `${answered} / ${total} ОТВЕЧЕНО`;
+  document.getElementById('quiz-progress-fill').style.width = `${(answered / total) * 100}%`;
+
+  const btn = document.getElementById('submit-btn');
+  const hint = document.getElementById('submit-hint');
+  if (answered === total) {
+    btn.classList.add('active');
+    hint.textContent = 'Готово к сдаче!';
+  } else {
+    btn.classList.remove('active');
+    hint.textContent = `Осталось: ${total - answered} вопр.`;
+  }
+}
+
+function submitQuiz() {
+  showScreen('results');
+  const questions = tickets[currentTicket];
+  let correct = 0;
+
+  const list = document.getElementById('results-list');
+  list.innerHTML = '';
+
+  questions.forEach((q, qi) => {
+    const opts = shuffledOptions[qi];
+    const selectedShuffledIdx = userAnswers[qi];
+    const selectedOpt = opts[selectedShuffledIdx];
+    const isCorrect = selectedOpt && selectedOpt.correct;
+    if (isCorrect) correct++;
+
+    const correctShuffledIdx = opts.findIndex(o => o.correct);
+    const correctLetter = letters[correctShuffledIdx];
+
+    let selectedLabel = '';
+    if (q.answerType === 'text' && selectedOpt) {
+      selectedLabel = `«${selectedOpt.text}»`;
+    } else {
+      selectedLabel = `вариант ${letters[selectedShuffledIdx]}`;
+    }
+
+    let correctLabel = '';
+    if (q.answerType === 'text') {
+      const correctOpt = opts.find(o => o.correct);
+      correctLabel = `вариант ${correctLetter} — «${correctOpt.text}»`;
+    } else {
+      correctLabel = `вариант ${correctLetter}`;
+    }
+
+    const item = document.createElement('div');
+    item.className = 'result-item';
+    item.innerHTML = `
+      <div class="result-item-q">Вопрос ${qi + 1}: ${q.question}</div>
+      <div class="result-verdict ${isCorrect ? 'ok' : 'fail'}">
+        ${isCorrect ? '✓ ПРАВИЛЬНО' : '✗ НЕПРАВИЛЬНО'}
+      </div>
+      ${!isCorrect ? `<div class="result-correct-text">Правильный ответ: <strong>${correctLabel}</strong></div>` : ''}
+    `;
+    list.appendChild(item);
+  });
+
+  const pct = Math.round((correct / questions.length) * 100);
+  document.getElementById('results-score').innerHTML =
+    `Билет ${currentTicket} &nbsp;·&nbsp; Правильных: <span>${correct} / ${questions.length}</span> &nbsp;·&nbsp; ${pct}%`;
+  document.getElementById('results-heading') && (document.getElementById('results-heading').textContent = pct >= 60 ? 'СДАНО' : 'НЕ СДАНО');
+}
+
+function retryTicket() {
+  startTicket(currentTicket);
+}
+
+function goBack() {
+  showScreen('select');
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${name}`).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// Init
+buildGrid();
+</script>
+</body>
+</html>
