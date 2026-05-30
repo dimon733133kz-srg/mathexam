@@ -1210,16 +1210,10 @@ function renderQuestion(qi) {
 
     let contentHtml = '';
     if (q.answerType === 'image') {
-      // Try to find image: questions/{ticket}_{qIdx+1}_{optOrigIdx+1}.png or .jpg
       const base = `questions/${currentTicket}_${qi + 1}_${opt.origIdx + 1}`;
-      contentHtml = `
-        <picture>
-          <source srcset="${base}.png" type="image/png">
-          <source srcset="${base}.jpg" type="image/jpeg">
-          <img class="option-img" src="${base}.png" 
-               onerror="tryJpg(this, '${base}.jpg')"
-               alt="Вариант ${letters[i]}">
-        </picture>`;
+      const imgId = `img_q${qi}_o${i}`;
+      contentHtml = `<img id="${imgId}" class="option-img" src="" alt="Вариант ${letters[i]}" style="display:none"><span id="${imgId}_err" style="font-family:IBM Plex Mono,monospace;font-size:12px;color:#666;display:none">[изображение не найдено]</span>`;
+      setTimeout(() => loadImg('${imgId}', '${base}'), 0);
     } else {
       contentHtml = `<span class="option-text">${opt.text}</span>`;
     }
@@ -1233,14 +1227,24 @@ function renderQuestion(qi) {
   });
 }
 
-function tryJpg(img, jpgSrc) {
-  if (!img.dataset.tried) {
-    img.dataset.tried = '1';
-    img.src = jpgSrc;
-  } else {
-    img.style.display = 'none';
-    img.parentElement.innerHTML = '<span style="font-family:IBM Plex Mono,monospace;font-size:12px;color:#666">[изображение не найдено]</span>';
+function loadImg(imgId, base) {
+  const extensions = ['jpg', 'jpeg', 'png', 'JPG', 'JPEG', 'PNG'];
+  const img = document.getElementById(imgId);
+  const err = document.getElementById(imgId + '_err');
+  if (!img) return;
+  let idx = 0;
+  function tryNext() {
+    if (idx >= extensions.length) {
+      if (err) err.style.display = '';
+      return;
+    }
+    const src = base + '.' + extensions[idx++];
+    const probe = new Image();
+    probe.onload = () => { img.src = src; img.style.display = ''; };
+    probe.onerror = tryNext;
+    probe.src = src;
   }
+  tryNext();
 }
 
 function selectOption(qi, optIdx) {
